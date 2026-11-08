@@ -39,11 +39,13 @@
     </section>
     <section id="startPanel" class="panel">
       <h2>চ্যাট শুরু করুন</h2>
-      <p class="sub">শুরু করতে শুধু আপনার নামটি লিখুন। আমাদের একজন প্রতিনিধি আপনার সঙ্গে কথা বলবেন।</p>
+      <p class="sub">শুরু করতে আপনার নাম ও মোবাইল নম্বর লিখুন। আমাদের একজন প্রতিনিধি আপনার সঙ্গে কথা বলবেন।</p>
       <form id="startForm">
         <label for="customerName">আপনার নাম</label>
-        <input class="field" id="customerName" maxlength="80" placeholder="আপনার নাম লিখুন" required>
-        <button class="primary" id="startBtn">চ্যাট শুরু করুন <span>→</span></button>
+        <input class="field" id="customerName" maxlength="80" placeholder="আপনার নাম লিখুন" autocomplete="name" required>
+        <label for="customerPhone">মোবাইল নম্বর</label>
+        <input class="field" id="customerPhone" type="tel" inputmode="tel" maxlength="20" placeholder="যেমন: 01XXXXXXXXX" autocomplete="tel" required>
+        <button class="primary" id="startBtn" type="submit">চ্যাট শুরু করুন <span>→</span></button>
       </form>
       <div id="startError" class="error"></div>
       <p class="hint">আপনার কথোপকথনটি নিরাপদভাবে সংরক্ষিত থাকবে।</p>
@@ -131,7 +133,6 @@ function renderMessages(targetId, rows, agentMode=false){
   const box=$(targetId);
   if(!rows || !rows.length){box.innerHTML='<div class="empty">এখনো কোনো মেসেজ নেই। কথোপকথন শুরু করুন।</div>';return;}
   box.innerHTML=rows.map(m=>{
-    const mine=m.sender_id=== (supabase ? supabase.auth.getSession().then : null); // replaced below
     const own = agentMode ? m.sender_id===window.__agentUid : m.sender_type==="customer";
     const label=m.sender_name || (m.sender_type==="agent" ? "সাপোর্ট টিম" : "আপনি");
     return `<div class="bubble ${own?"mine":"theirs"}"><div class="who">${escapeHtml(label)}</div>${escapeHtml(m.content||"")}${mediaMarkup(m)}<div class="stamp">${timeText(m.created_at)}</div></div>`;
@@ -169,14 +170,14 @@ async function sendFrom(formTextId,fileId,conversationId){
   }catch(e){toast("মেসেজ পাঠানো যায়নি: "+e.message);}
 }
 
-async function startCustomerChat(name){
+async function startCustomerChat(name, phone){
   const {data:{user},error:authError}=await supabase.auth.getUser();
   if(authError) throw authError;
   if(!user){
     const {error}=await supabase.auth.signInAnonymously();if(error)throw error;
   }
   const {data,error}=await supabase.rpc("create_customer_conversation",{
-    p_name:name.trim(),p_phone:null,p_first_message:null
+    p_name:name.trim(),p_phone:phone.trim(),p_first_message:null
   });
   if(error)throw error;
   currentConversation=data;
@@ -192,9 +193,12 @@ async function refreshCustomerMessages(){
 $("startForm").addEventListener("submit",async e=>{
   e.preventDefault();clearError("startError");
   if(!supabase){showError("startError","প্রথমে কোডে Supabase Publishable/anon key বসান।");return;}
-  const name=$("customerName").value.trim();if(!name)return;
+  const name=$("customerName").value.trim();
+  const phone=$("customerPhone").value.trim();
+  if(!name || !phone){showError("startError","আপনার নাম ও মোবাইল নম্বর লিখুন।");return;}
+  if(!/^[0-9+()\-\s]{8,20}$/.test(phone)){showError("startError","সঠিক মোবাইল নম্বর লিখুন।");return;}
   $("startBtn").disabled=true;
-  try{await startCustomerChat(name);}catch(err){showError("startError","চ্যাট শুরু হয়নি: "+err.message);}
+  try{await startCustomerChat(name,phone);}catch(err){showError("startError","চ্যাট শুরু হয়নি: "+(err.message||String(err)));}
   finally{$("startBtn").disabled=false;}
 });
 $("customerCompose").addEventListener("submit",async e=>{e.preventDefault();await sendFrom("customerText","customerFile",currentConversation);});
