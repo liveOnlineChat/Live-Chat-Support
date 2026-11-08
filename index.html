@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="bn">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0f766e">
+  <title>Live Chat Support</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root{--teal:#0f766e;--teal2:#14b8a6;--ink:#132b36;--muted:#718096;--line:#e5edf0;--bg:#f3f8f8;--white:#fff;--shadow:0 18px 55px rgba(20,60,70,.12)}
+    *{box-sizing:border-box}body{margin:0;background:linear-gradient(145deg,#e9f7f5,#f5f8fc 55%,#eaf2ff);font-family:system-ui,-apple-system,"Noto Sans Bengali",sans-serif;color:var(--ink);min-height:100vh}
+    button,input,textarea{font:inherit}button{cursor:pointer;border:0}
+    .top{height:68px;display:flex;align-items:center;justify-content:space-between;padding:0 max(22px,calc((100vw - 1120px)/2));background:rgba(255,255,255,.86);backdrop-filter:blur(12px);border-bottom:1px solid #e4eeee}
+    .brand{display:flex;align-items:center;gap:11px;font-weight:800;font-size:17px}.logo{width:39px;height:39px;border-radius:13px;background:linear-gradient(135deg,var(--teal),#22c5ad);display:grid;place-items:center;color:white;font-size:21px;box-shadow:0 7px 18px #0f766e33}
+    .online{font-size:12px;color:#13866f;background:#e5f8f1;border:1px solid #c7eee1;border-radius:30px;padding:7px 12px}
+    .wrap{max-width:1120px;margin:42px auto;padding:0 20px}.hero{text-align:center;margin:0 auto 28px;max-width:650px}.eyebrow{font-size:12px;letter-spacing:1.5px;color:var(--teal);font-weight:800}.hero h1{font-size:clamp(28px,5vw,43px);line-height:1.22;margin:12px 0;color:#123843}.hero p{color:#607681;line-height:1.8;margin:0}
+    .panel{max-width:500px;margin:auto;background:white;border:1px solid #e5eeee;border-radius:24px;box-shadow:var(--shadow);padding:28px}.panel h2{font-size:21px;margin:0 0 7px}.sub{color:var(--muted);font-size:13px;line-height:1.65;margin:0 0 22px}
+    label{display:block;font-size:13px;font-weight:700;margin:14px 0 8px}.field{width:100%;border:1px solid #dce7e9;background:#fbfdfd;border-radius:12px;padding:13px 14px;outline:none}.field:focus{border-color:#38a99d;box-shadow:0 0 0 3px #14b8a61b}
+    .primary{width:100%;padding:14px 18px;border-radius:12px;color:white;font-weight:800;background:linear-gradient(110deg,#0f766e,#14a99a);box-shadow:0 8px 18px #0f766e2b;margin-top:17px}.primary:disabled{opacity:.6;cursor:wait}
+    .hint{font-size:12px;color:#84939a;text-align:center;margin:14px 0 0}.error{font-size:13px;color:#b42318;background:#fff1f0;border-radius:10px;padding:10px;margin-top:12px;display:none}.hidden{display:none!important}
+    .chat-shell{max-width:850px;margin:24px auto;background:white;border-radius:22px;overflow:hidden;box-shadow:var(--shadow);border:1px solid #e5eeee}.chat-head{padding:17px 20px;background:#fff;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}.chat-title{font-weight:800}.chat-sub{font-size:12px;color:var(--muted);margin-top:3px}.chat-body{height:min(56vh,520px);min-height:330px;overflow:auto;padding:20px;background:#f7fbfb}.bubble{max-width:78%;padding:11px 14px;border-radius:16px;margin:9px 0;line-height:1.55;overflow-wrap:anywhere;white-space:pre-wrap}.mine{margin-left:auto;background:#d8f5ee;border-bottom-right-radius:5px}.theirs{background:white;border:1px solid #e7eeee;border-bottom-left-radius:5px}.who{font-size:10px;color:#698087;margin-bottom:4px;font-weight:800}.stamp{font-size:10px;color:#8a9a9e;margin-top:5px;text-align:right}.bubble img,.bubble video{max-width:100%;border-radius:10px;display:block}.chat-compose{display:flex;gap:9px;padding:14px;border-top:1px solid var(--line);align-items:center}.chat-compose input[type=text]{flex:1;min-width:0;border:1px solid #dce7e9;border-radius:12px;padding:13px}.send{background:var(--teal);color:#fff;border-radius:12px;padding:12px 17px;font-weight:800}.attach{background:#edf7f5;color:var(--teal);border-radius:11px;padding:11px}.smallbtn{background:#eff6f5;color:#45616a;padding:9px 12px;border-radius:10px;font-size:12px}
+    /* Agent dashboard */
+    .agent-wrap{max-width:1180px;margin:28px auto;padding:0 18px}.agent-grid{display:grid;grid-template-columns:330px 1fr;min-height:650px;background:#fff;border:1px solid #e2ebed;border-radius:20px;overflow:hidden;box-shadow:var(--shadow)}.sidebar{border-right:1px solid var(--line);min-width:0}.side-head{padding:18px;border-bottom:1px solid var(--line)}.side-head h2{font-size:18px;margin:0}.side-head p{font-size:12px;color:var(--muted);margin:5px 0 0}.search{margin-top:14px}.conv-list{height:570px;overflow:auto}.conv{padding:14px 17px;border-bottom:1px solid #eef2f3;cursor:pointer}.conv:hover,.conv.active{background:#effaf7}.conv strong{font-size:14px}.conv small{display:block;color:#819198;margin-top:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.conv-meta{display:flex;justify-content:space-between;gap:8px}.tag{font-size:10px;color:#0f766e;background:#e2f7f1;border-radius:20px;padding:4px 7px;white-space:nowrap}.agent-chat{min-width:0;display:flex;flex-direction:column}.agent-chat .chat-body{height:520px;flex:1}.empty{display:grid;place-items:center;text-align:center;color:#7c8e95;padding:35px}.login-panel{max-width:430px;margin:55px auto;background:white;padding:28px;border-radius:22px;box-shadow:var(--shadow)}
+    .footer{text-align:center;color:#8a9a9e;font-size:11px;padding:25px}.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#173b42;color:#fff;padding:11px 17px;border-radius:12px;box-shadow:var(--shadow);z-index:5;font-size:13px}
+    @media(max-width:700px){.top{height:60px;padding:0 15px}.wrap{margin:25px auto;padding:0 13px}.panel{padding:22px}.agent-wrap{padding:0 8px}.agent-grid{grid-template-columns:1fr}.sidebar{border-right:0;border-bottom:1px solid var(--line)}.conv-list{height:210px}.agent-chat .chat-body{height:50vh}.chat-shell{margin:14px 8px}.chat-compose{gap:6px;padding:10px}.send{padding:12px}.bubble{max-width:88%}}
+  </style>
+</head>
+<body>
+  <header class="top">
+    <div class="brand"><div class="logo">✦</div><span>Live Chat Support</span></div>
+    <div class="online">● সাপোর্ট অনলাইন</div>
+  </header>
+
+  <main id="customerPage" class="wrap">
+    <section class="hero">
+      <div class="eyebrow">WE ARE HERE TO HELP</div>
+      <h1>আপনার প্রয়োজনে, আমরা আছি পাশে</h1>
+      <p>যেকোনো প্রশ্ন বা সহযোগিতার জন্য আমাদের টিমের সঙ্গে সরাসরি কথা বলুন। আমরা যত দ্রুত সম্ভব উত্তর দেওয়ার চেষ্টা করব।</p>
+    </section>
+    <section id="startPanel" class="panel">
+      <h2>চ্যাট শুরু করুন</h2>
+      <p class="sub">শুরু করতে শুধু আপনার নামটি লিখুন। আমাদের একজন প্রতিনিধি আপনার সঙ্গে কথা বলবেন।</p>
+      <form id="startForm">
+        <label for="customerName">আপনার নাম</label>
+        <input class="field" id="customerName" maxlength="80" placeholder="আপনার নাম লিখুন" required>
+        <button class="primary" id="startBtn">চ্যাট শুরু করুন <span>→</span></button>
+      </form>
+      <div id="startError" class="error"></div>
+      <p class="hint">আপনার কথোপকথনটি নিরাপদভাবে সংরক্ষিত থাকবে।</p>
+    </section>
+    <section id="customerChat" class="chat-shell hidden">
+      <div class="chat-head"><div><div class="chat-title">সাপোর্ট টিম</div><div class="chat-sub">আপনার মেসেজের অপেক্ষায় আছি</div></div><button class="smallbtn" id="customerExit">চ্যাট বন্ধ</button></div>
+      <div id="customerMessages" class="chat-body"></div>
+      <form id="customerCompose" class="chat-compose">
+        <label class="attach" for="customerFile" title="ছবি বা ভিডিও যুক্ত করুন">＋</label><input id="customerFile" type="file" accept="image/*,video/mp4,video/webm" class="hidden">
+        <input id="customerText" type="text" placeholder="আপনার মেসেজ লিখুন..." autocomplete="off">
+        <button class="send">পাঠান</button>
+      </form>
+    </section>
+  </main>
+
+  <main id="agentPage" class="hidden">
+    <section id="agentLogin" class="login-panel">
+      <h2 style="margin:0 0 6px">এজেন্ট লগইন</h2><p class="sub">আপনার নির্ধারিত username ও password দিয়ে প্রবেশ করুন।</p>
+      <form id="agentLoginForm">
+        <label>Username</label><input id="agentUsername" class="field" autocomplete="username" placeholder="যেমন: rahat" required>
+        <label>Password</label><input id="agentPassword" type="password" class="field" autocomplete="current-password" placeholder="আপনার password" required>
+        <button class="primary" id="agentLoginBtn">লগইন করুন</button>
+      </form><div id="agentError" class="error"></div>
+    </section>
+    <section id="agentDashboard" class="agent-wrap hidden">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin:0 2px 15px;gap:12px"><div><b style="font-size:20px">এজেন্ট ইনবক্স</b><div id="agentWelcome" class="chat-sub"></div></div><button class="smallbtn" id="agentLogout">লগআউট</button></div>
+      <div class="agent-grid">
+        <aside class="sidebar"><div class="side-head"><h2>সব কথোপকথন</h2><p>যেকোনো এজেন্ট যেকোনো কাস্টমারকে উত্তর দিতে পারবেন</p><input id="convSearch" class="field search" placeholder="নাম দিয়ে খুঁজুন..."></div><div id="conversationList" class="conv-list"></div></aside>
+        <section class="agent-chat"><div id="agentChatHead" class="chat-head"><div><div class="chat-title">কথোপকথন নির্বাচন করুন</div><div class="chat-sub">বাম পাশ থেকে একজন কাস্টমার বেছে নিন</div></div></div><div id="agentMessages" class="chat-body"><div class="empty">কোনো কথোপকথন নির্বাচন করা হয়নি</div></div>
+          <form id="agentCompose" class="chat-compose hidden"><label class="attach" for="agentFile">＋</label><input id="agentFile" type="file" accept="image/*,video/mp4,video/webm" class="hidden"><input id="agentText" type="text" placeholder="মেসেজ লিখুন..." autocomplete="off"><button class="send">পাঠান</button></form>
+        </section>
+      </div>
+    </section>
+  </main>
+  <div class="footer">© Live Chat Support · আমরা আপনার পাশে আছি</div>
+  <div id="toast" class="toast hidden"></div>
+
+<script>
+/* ==========================================================
+   SETUP: Supabase Dashboard → Project Settings → API
+   এখানে শুধু Project URL এবং Publishable/anon key বসাবেন।
+   কখনো service_role / secret key বসাবেন না।
+   ========================================================== */
+const SUPABASE_URL = "https://mvvitdgsacqlsimepflv.supabase.co";
+const SUPABASE_ANON_KEY = "PASTE_YOUR_SUPABASE_PUBLISHABLE_OR_ANON_KEY_HERE";
+
+/* Existing database names based on the setup discussed:
+   tables: profiles, conversations, messages
+   profiles order column: rr_order
+   RPC: create_customer_conversation(p_name,p_phone,p_first_message)
+   If your original SQL used a different column name, tell me before editing this section.
+*/
+const TABLES = { profiles:"profiles", conversations:"conversations", messages:"messages" };
+const MEDIA_BUCKET = "chat-media";
+const AGENTS = {
+  rahat:{email:"rahat@livechat.local",name:"Rahat"},
+  ratul:{email:"ratul@livechat.local",name:"Ratul"},
+  rahul:{email:"rahul@livechat.local",name:"Rahul"},
+  dip:{email:"dip@livechat.local",name:"Dip"}
+};
+
+const $ = id => document.getElementById(id);
+const clientReady = SUPABASE_ANON_KEY && !SUPABASE_ANON_KEY.includes("PASTE_");
+const supabase = window.supabase && clientReady
+  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+  : null;
+let currentConversation = null, currentAgent = null, customerChannel = null, agentChannel = null, conversationChannel = null, conversationsCache = [];
+
+function toast(message){
+  $("toast").textContent = message; $("toast").classList.remove("hidden");
+  setTimeout(()=>$("toast").classList.add("hidden"),3000);
+}
+function showError(id,message){$(id).textContent=message;$(id).style.display="block";}
+function clearError(id){$(id).textContent="";$(id).style.display="none";}
+function escapeHtml(value=""){return String(value).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function timeText(value){try{return new Date(value).toLocaleTimeString("bn-BD",{hour:"2-digit",minute:"2-digit"});}catch{return "";}}
+function mediaMarkup(message){
+  if(!message.media_url) return "";
+  const url=escapeHtml(message.media_url);
+  if((message.message_type||"").startsWith("image")) return `<img src="${url}" alt="ছবি">`;
+  if((message.message_type||"").startsWith("video")) return `<video src="${url}" controls playsinline></video>`;
+  return `<a href="${url}" target="_blank" rel="noopener">ফাইল দেখুন</a>`;
+}
+function renderMessages(targetId, rows, agentMode=false){
+  const box=$(targetId);
+  if(!rows || !rows.length){box.innerHTML='<div class="empty">এখনো কোনো মেসেজ নেই। কথোপকথন শুরু করুন।</div>';return;}
+  box.innerHTML=rows.map(m=>{
+    const mine=m.sender_id=== (supabase ? supabase.auth.getSession().then : null); // replaced below
+    const own = agentMode ? m.sender_id===window.__agentUid : m.sender_type==="customer";
+    const label=m.sender_name || (m.sender_type==="agent" ? "সাপোর্ট টিম" : "আপনি");
+    return `<div class="bubble ${own?"mine":"theirs"}"><div class="who">${escapeHtml(label)}</div>${escapeHtml(m.content||"")}${mediaMarkup(m)}<div class="stamp">${timeText(m.created_at)}</div></div>`;
+  }).join("");
+  box.scrollTop=box.scrollHeight;
+}
+async function getMessages(conversationId){
+  const {data,error}=await supabase.from(TABLES.messages).select("*").eq("conversation_id",conversationId).order("created_at",{ascending:true});
+  if(error) throw error; return data||[];
+}
+async function addMessage(conversationId,text,media=null){
+  const {data:{user}}=await supabase.auth.getUser();
+  const payload={conversation_id:conversationId,sender_id:user.id,sender_type:currentAgent?"agent":"customer",content:text||"",message_type:media?(media.type.startsWith("image")?"image":"video"):"text"};
+  if(media) payload.media_url=media.url;
+  const {error}=await supabase.from(TABLES.messages).insert(payload);
+  if(error) throw error;
+}
+async function uploadMedia(file){
+  const {data:{user}}=await supabase.auth.getUser();
+  const safeName=file.name.replace(/[^a-zA-Z0-9._-]/g,"_");
+  const path=`${user.id}/${Date.now()}-${safeName}`;
+  const {error}=await supabase.storage.from(MEDIA_BUCKET).upload(path,file,{upsert:false,contentType:file.type});
+  if(error) throw error;
+  const {data}=supabase.storage.from(MEDIA_BUCKET).getPublicUrl(path);
+  return data.publicUrl;
+}
+async function sendFrom(formTextId,fileId,conversationId){
+  const text=$(formTextId).value.trim(), file=$(fileId).files[0];
+  if(!text&&!file)return;
+  try{
+    let media=null;
+    if(file){const url=await uploadMedia(file);media={url,type:file.type};}
+    await addMessage(conversationId,text,media);
+    $(formTextId).value="";$(fileId).value="";
+  }catch(e){toast("মেসেজ পাঠানো যায়নি: "+e.message);}
+}
+
+async function startCustomerChat(name){
+  const {data:{user},error:authError}=await supabase.auth.getUser();
+  if(authError) throw authError;
+  if(!user){
+    const {error}=await supabase.auth.signInAnonymously();if(error)throw error;
+  }
+  const {data,error}=await supabase.rpc("create_customer_conversation",{
+    p_name:name.trim(),p_phone:null,p_first_message:null
+  });
+  if(error)throw error;
+  currentConversation=data;
+  $("startPanel").classList.add("hidden");$("customerChat").classList.remove("hidden");
+  await refreshCustomerMessages();
+  if(customerChannel)await supabase.removeChannel(customerChannel);
+  customerChannel=supabase.channel("customer-"+data).on("postgres_changes",{event:"*",schema:"public",table:TABLES.messages,filter:"conversation_id=eq."+data},refreshCustomerMessages).subscribe();
+}
+async function refreshCustomerMessages(){
+  if(!currentConversation)return;
+  try{renderMessages("customerMessages",await getMessages(currentConversation),false);}catch(e){toast(e.message);}
+}
+$("startForm").addEventListener("submit",async e=>{
+  e.preventDefault();clearError("startError");
+  if(!supabase){showError("startError","প্রথমে কোডে Supabase Publishable/anon key বসান।");return;}
+  const name=$("customerName").value.trim();if(!name)return;
+  $("startBtn").disabled=true;
+  try{await startCustomerChat(name);}catch(err){showError("startError","চ্যাট শুরু হয়নি: "+err.message);}
+  finally{$("startBtn").disabled=false;}
+});
+$("customerCompose").addEventListener("submit",async e=>{e.preventDefault();await sendFrom("customerText","customerFile",currentConversation);});
+$("customerFile").addEventListener("change",()=>{if(currentConversation)sendFrom("customerText","customerFile",currentConversation);});
+$("customerExit").addEventListener("click",async()=>{
+  if(customerChannel)await supabase.removeChannel(customerChannel);
+  currentConversation=null;$("customerChat").classList.add("hidden");$("startPanel").classList.remove("hidden");
+  $("customerMessages").innerHTML="";
+});
+
+function renderConversationList(){
+  const q=$("convSearch").value.toLowerCase();
+  const rows=conversationsCache.filter(c=>(c.customer_name||"কাস্টমার").toLowerCase().includes(q));
+  $("conversationList").innerHTML=rows.map(c=>`<div class="conv ${c.id===currentConversation?"active":""}" data-id="${c.id}">
+    <div class="conv-meta"><strong>${escapeHtml(c.customer_name||"নাম নেই")}</strong><span class="tag">${c.status==="closed"?"বন্ধ":"চলমান"}</span></div>
+    <small>${escapeHtml(c.last_message||"কথোপকথন খুলতে ক্লিক করুন")}</small></div>`).join("")||'<div class="empty">কোনো কথোপকথন পাওয়া যায়নি</div>';
+  document.querySelectorAll(".conv").forEach(el=>el.addEventListener("click",()=>selectConversation(el.dataset.id)));
+}
+async function loadConversations(){
+  const {data,error}=await supabase.from(TABLES.conversations).select("*").order("updated_at",{ascending:false});
+  if(error)throw error;
+  conversationsCache=(data||[]);
+  renderConversationList();
+}
+async function selectConversation(id){
+  currentConversation=id;const c=conversationsCache.find(x=>x.id===id);
+  $("agentChatHead").innerHTML=`<div><div class="chat-title">${escapeHtml(c?.customer_name||"কাস্টমার")}</div><div class="chat-sub">Assigned agent: ${escapeHtml(agentNameById(c?.assigned_agent_id)||"নির্ধারিত")}</div></div>`;
+  $("agentCompose").classList.remove("hidden");
+  await refreshAgentMessages();renderConversationList();
+  if(agentChannel)await supabase.removeChannel(agentChannel);
+  agentChannel=supabase.channel("agent-"+id).on("postgres_changes",{event:"*",schema:"public",table:TABLES.messages,filter:"conversation_id=eq."+id},refreshAgentMessages).subscribe();
+}
+function agentNameById(id){const p=window.__profiles?.find(x=>x.id===id);return p?.display_name||"এজেন্ট";}
+async function refreshAgentMessages(){
+  if(!currentConversation)return;
+  try{renderMessages("agentMessages",await getMessages(currentConversation),true);}catch(e){toast(e.message);}
+}
+async function loginAgent(username,password){
+  const agent=AGENTS[username.toLowerCase()];
+  if(!agent)throw new Error("সঠিক username লিখুন: rahat, ratul, rahul অথবা dip");
+  const {error}=await supabase.auth.signInWithPassword({email:agent.email,password});
+  if(error)throw error;
+  const {data:{user}}=await supabase.auth.getUser();
+  const {data:profile,error:profileError}=await supabase.from(TABLES.profiles).select("*").eq("id",user.id).single();
+  if(profileError)throw profileError;
+  if(profile.role!=="agent")throw new Error("এই account-এ agent permission নেই।");
+  currentAgent=profile;window.__agentUid=user.id;
+  $("agentLogin").classList.add("hidden");$("agentDashboard").classList.remove("hidden");
+  $("agentWelcome").textContent=(profile.display_name||agent.name)+" হিসেবে লগইন করেছেন";
+  const {data:profiles}=await supabase.from(TABLES.profiles).select("id,display_name,rr_order").eq("role","agent");
+  window.__profiles=profiles||[];
+  await loadConversations();
+  if(conversationChannel)await supabase.removeChannel(conversationChannel);
+  conversationChannel=supabase.channel("agent-conversations").on("postgres_changes",{event:"*",schema:"public",table:TABLES.conversations},async()=>{await loadConversations();}).subscribe();
+}
+$("agentLoginForm").addEventListener("submit",async e=>{
+  e.preventDefault();clearError("agentError");
+  if(!supabase){showError("agentError","প্রথমে Supabase key বসাতে হবে।");return;}
+  $("agentLoginBtn").disabled=true;
+  try{await loginAgent($("agentUsername").value.trim(),$("agentPassword").value);}catch(err){showError("agentError","লগইন হয়নি: "+err.message);}
+  finally{$("agentLoginBtn").disabled=false;}
+});
+$("agentCompose").addEventListener("submit",async e=>{e.preventDefault();if(currentConversation)await sendFrom("agentText","agentFile",currentConversation);});
+$("agentFile").addEventListener("change",()=>{if(currentConversation)sendFrom("agentText","agentFile",currentConversation);});
+$("convSearch").addEventListener("input",renderConversationList);
+$("agentLogout").addEventListener("click",async()=>{
+  if(agentChannel)await supabase.removeChannel(agentChannel);if(conversationChannel)await supabase.removeChannel(conversationChannel);
+  await supabase.auth.signOut();currentAgent=null;currentConversation=null;
+  $("agentDashboard").classList.add("hidden");$("agentLogin").classList.remove("hidden");$("agentLoginForm").reset();
+});
+/* Open agent login with #agent; normal ad URL opens customer chat page. */
+if(location.hash==="#agent"){
+  $("customerPage").classList.add("hidden");$("agentPage").classList.remove("hidden");
+}
+</script>
+</body>
+</html>
